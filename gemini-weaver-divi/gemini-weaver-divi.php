@@ -50,6 +50,8 @@ if ( ! gwd_is_divi_active() ) {
 require_once GWD_PATH . 'includes/class-divi-metabox.php';
 // Include Gemini connector.
 require_once GWD_PATH . 'includes/class-gemini-connector.php';
+// Divi parser for converting shortcodes to JSON and back.
+require_once GWD_PATH . 'includes/class-divi-parser.php';
 
 /**
  * Enqueue scripts and styles on the page editor screen.
@@ -86,22 +88,43 @@ add_action( 'admin_enqueue_scripts', 'gwd_enqueue_editor_assets' );
 function gwd_process_prompt() {
     check_ajax_referer( 'gwd_nonce', 'nonce' );
 
-    $prompt = isset( $_POST['prompt'] ) ? sanitize_text_field( wp_unslash( $_POST['prompt'] ) ) : '';
+    $prompt  = isset( $_POST['prompt'] ) ? sanitize_text_field( wp_unslash( $_POST['prompt'] ) ) : '';
+    $post_id = isset( $_POST['post_id'] ) ? intval( $_POST['post_id'] ) : 0;
 
-    $connector = new Gemini_Connector();
-    $shortcode = $connector->generate_divi_shortcodes( $prompt );
-
-    if ( is_wp_error( $shortcode ) ) {
+    $post = get_post( $post_id );
+    if ( ! $post ) {
         wp_send_json( array(
             'status'  => 'error',
-            'message' => $shortcode->get_error_message(),
-        ) );
-    } else {
-        wp_send_json( array(
-            'status'    => 'success',
-            'shortcode' => $shortcode,
+            'message' => __( 'Invalid post ID.', 'gemini-weaver-divi' ),
         ) );
     }
+
+    $parser       = new Divi_Parser();
+    $current_json = $parser->parse_to_json( $post->post_content );
+
+    $full_prompt = sprintf(
+        "Eres un editor de páginas Divi. A continuación te doy la estructura JSON de una página. Modifícala según la petición del usuario y devuelve únicamente el nuevo JSON completo. Estructura actual: %s Petición: '%s'.",
+        $current_json,
+        $prompt
+    );
+
+    $connector     = new Gemini_Connector();
+    $json_response = $connector->send_prompt( $full_prompt );
+
+    if ( is_wp_error( $json_response ) ) {
+        wp_send_json( array(
+            'status'  => 'error',
+            'message' => $json_response->get_error_message(),
+        ) );
+    }
+
+    $clean_json   = trim( $json_response, " \n\r\t`" );
+    $shortcode    = $parser->rebuild_from_json( $clean_json );
+
+    wp_send_json( array(
+        'status'    => 'success',
+        'shortcode' => $shortcode,
+    ) );
 
     wp_die();
 }

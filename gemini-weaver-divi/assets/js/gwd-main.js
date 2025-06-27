@@ -3,6 +3,7 @@
 
     $('#gwd-submit-prompt').on('click', function() {
         var prompt = $('#gwd-prompt-input').val();
+        var postId = $('#gwd-post-id').val();
         $('#gwd-status').text('Procesando...');
 
         $.ajax({
@@ -11,6 +12,7 @@
             data: {
                 action: 'gwd_process_prompt',
                 prompt: prompt,
+                post_id: postId,
                 nonce: gwd_ajax.nonce
             },
             success: function(response) {
@@ -19,7 +21,7 @@
                 if (response.status === 'success') {
                     var shortcode = response.shortcode || '';
                     var $editor = jQuery('#content');
-                    $editor.val($editor.val() + "\n" + shortcode);
+                    $editor.val(shortcode);
                 } else if (response.message) {
                     $('#gwd-status').text(response.message);
                 }
