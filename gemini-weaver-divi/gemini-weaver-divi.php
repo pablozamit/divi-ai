@@ -87,6 +87,37 @@ function gwd_enqueue_editor_assets( $hook ) {
 add_action( 'admin_enqueue_scripts', 'gwd_enqueue_editor_assets' );
 
 /**
+ * Enqueue assets in Divi Visual Builder (frontend).
+ */
+function gwd_enqueue_frontend_assets() {
+    if ( is_page() && isset( $_GET['et_fb'] ) && '1' === $_GET['et_fb'] ) {
+        wp_enqueue_script( 'gwd-main', GWD_URL . 'assets/js/gwd-main.js', array( 'jquery' ), '1.0.0', true );
+        wp_localize_script(
+            'gwd-main',
+            'gwd_ajax',
+            array(
+                'ajax_url' => admin_url( 'admin-ajax.php' ),
+                'nonce'    => wp_create_nonce( 'gwd_nonce' ),
+            )
+        );
+        wp_enqueue_style( 'gwd-style', GWD_URL . 'assets/css/gwd-style.css', array(), '1.0.0' );
+    }
+}
+add_action( 'wp_enqueue_scripts', 'gwd_enqueue_frontend_assets' );
+
+/**
+ * Render Gemini Weaver UI in the Visual Builder.
+ */
+function gwd_render_frontend_panel() {
+    if ( is_page() && isset( $_GET['et_fb'] ) && '1' === $_GET['et_fb'] ) {
+        echo '<div id="gwd-builder-panel">';
+        echo GWD_Divi_Metabox::ui_html( get_the_ID() );
+        echo '</div>';
+    }
+}
+add_action( 'wp_footer', 'gwd_render_frontend_panel' );
+
+/**
  * Recursively find an element by ID.
  *
  * @param array $elements Parsed elements.
@@ -226,6 +257,8 @@ function gwd_process_prompt() {
 
     $shortcode = $parser->rebuild_from_json( $clean_json );
 
+    $preview_html = do_shortcode( $shortcode );
+
     $history_item = array(
         'prompt'    => $prompt,
         'timestamp' => current_time( 'mysql' ),
@@ -233,8 +266,9 @@ function gwd_process_prompt() {
     add_post_meta( $post_id, '_gwd_prompt_history', wp_json_encode( $history_item ) );
 
     wp_send_json( array(
-        'status'    => 'success',
-        'shortcode' => $shortcode,
+        'status'       => 'success',
+        'shortcode'    => $shortcode,
+        'preview_html' => $preview_html,
     ) );
 
     wp_die();

@@ -17,3 +17,21 @@
     max-height: 200px;
     overflow-y: auto;
 }
+
+#gwd-visual-preview-container {
+    margin-top: 10px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    background-color: #fff;
+}
+
+#gwd-builder-panel {
+    position: fixed;
+    top: 100px;
+    right: 20px;
+    width: 300px;
+    background: #fff;
+    border: 1px solid #ccc;
+    padding: 10px;
+    z-index: 99999;
+}
