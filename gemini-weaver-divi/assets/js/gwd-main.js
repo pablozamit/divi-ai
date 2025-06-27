@@ -20,8 +20,8 @@
                 $('#gwd-status').text('');
                 if (response.status === 'success') {
                     var shortcode = response.shortcode || '';
-                    var $editor = jQuery('#content');
-                    $editor.val(shortcode);
+                    $('#gwd-preview-content').val(shortcode);
+                    $('#gwd-preview-container').show();
                 } else if (response.message) {
                     $('#gwd-status').text(response.message);
                 }
@@ -30,5 +30,16 @@
                 $('#gwd-status').text('Error al procesar el prompt.');
             }
         });
+    });
+
+    $('#gwd-apply-shortcode').on('click', function() {
+        var shortcode = $('#gwd-preview-content').val();
+        jQuery('#content').val(shortcode);
+        $('#gwd-preview-container').hide();
+    });
+
+    $('#gwd-cancel-shortcode').on('click', function() {
+        $('#gwd-preview-content').val('');
+        $('#gwd-preview-container').hide();
     });
 })(jQuery);

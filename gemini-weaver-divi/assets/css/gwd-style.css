@@ -1,3 +1,10 @@
 #gwd-status {
     margin-top: 10px;
 }
+
+#gwd-preview-container {
+    margin-top: 10px;
+    padding: 10px;
+    border: 1px solid #106ba3; /* blueprint blue */
+    background-color: #f5f8fa;
+}
