@@ -52,6 +52,8 @@ require_once GWD_PATH . 'includes/class-divi-metabox.php';
 require_once GWD_PATH . 'includes/class-gemini-connector.php';
 // Divi parser for converting shortcodes to JSON and back.
 require_once GWD_PATH . 'includes/class-divi-parser.php';
+// Logger for plugin events.
+require_once GWD_PATH . 'includes/gwd-logger.php';
 // Settings page for API configuration.
 require_once GWD_PATH . 'includes/gwd-settings.php';
 // REST API endpoints for key management.
@@ -199,8 +201,11 @@ function gwd_process_prompt() {
     $element_id = isset( $_POST['element_id'] ) ? sanitize_text_field( wp_unslash( $_POST['element_id'] ) ) : '';
     $element_sc = isset( $_POST['element_shortcode'] ) ? wp_unslash( $_POST['element_shortcode'] ) : '';
 
+    gwd_log( 'Processing prompt for post ' . $post_id );
+
     $post = get_post( $post_id );
     if ( ! $post ) {
+        gwd_log( 'Invalid post ID ' . $post_id, 'error' );
         wp_send_json( array(
             'status'  => 'error',
             'message' => __( 'Invalid post ID.', 'gemini-weaver-divi' ),
@@ -240,6 +245,7 @@ function gwd_process_prompt() {
     $json_response = $connector->send_prompt( $full_prompt );
 
     if ( is_wp_error( $json_response ) ) {
+        gwd_log( 'Prompt error: ' . $json_response->get_error_message(), 'error' );
         wp_send_json( array(
             'status'  => 'error',
             'message' => $json_response->get_error_message(),
@@ -258,6 +264,8 @@ function gwd_process_prompt() {
     $shortcode = $parser->rebuild_from_json( $clean_json );
 
     $preview_html = do_shortcode( $shortcode );
+
+    gwd_log( 'Prompt processed successfully for post ' . $post_id );
 
     $history_item = array(
         'prompt'    => $prompt,

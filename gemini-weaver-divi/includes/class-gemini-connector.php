@@ -35,6 +35,8 @@ class Gemini_Connector {
             return new WP_Error( 'no_api_key', __( 'Gemini API key not configured.', 'gemini-weaver-divi' ) );
         }
 
+        gwd_log( 'Sending prompt: ' . $prompt );
+
         $body = array(
             'contents' => array(
                 array(
@@ -57,20 +59,24 @@ class Gemini_Connector {
         $response = wp_remote_post( 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent', $args );
 
         if ( is_wp_error( $response ) ) {
+            gwd_log( 'Request error: ' . $response->get_error_message(), 'error' );
             return $response;
         }
 
         $response_body = wp_remote_retrieve_body( $response );
         if ( empty( $response_body ) ) {
+            gwd_log( 'Empty response from Gemini API.', 'error' );
             return new WP_Error( 'empty_response', __( 'Empty response from Gemini API.', 'gemini-weaver-divi' ) );
         }
 
         $data = json_decode( $response_body, true );
         if ( ! isset( $data['candidates'][0]['content']['parts'][0]['text'] ) ) {
+            gwd_log( 'Invalid response from Gemini API.', 'error' );
             return new WP_Error( 'invalid_response', __( 'Invalid response from Gemini API.', 'gemini-weaver-divi' ) );
         }
 
         $text = trim( $data['candidates'][0]['content']['parts'][0]['text'] );
+        gwd_log( 'Received response: ' . $text );
         return $text;
     }
 
