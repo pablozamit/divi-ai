@@ -66,6 +66,32 @@ function gwd_enqueue_editor_assets( $hook ) {
     }
 
     wp_enqueue_script( 'gwd-main', GWD_URL . 'assets/js/gwd-main.js', array( 'jquery' ), '1.0.0', true );
+    wp_localize_script(
+        'gwd-main',
+        'gwd_ajax',
+        array(
+            'ajax_url' => admin_url( 'admin-ajax.php' ),
+            'nonce'    => wp_create_nonce( 'gwd_nonce' ),
+        )
+    );
     wp_enqueue_style( 'gwd-style', GWD_URL . 'assets/css/gwd-style.css', array(), '1.0.0' );
 }
 add_action( 'admin_enqueue_scripts', 'gwd_enqueue_editor_assets' );
+
+/**
+ * Process prompt sent from AJAX request.
+ */
+function gwd_process_prompt() {
+    check_ajax_referer( 'gwd_nonce', 'nonce' );
+
+    $prompt = isset( $_POST['prompt'] ) ? sanitize_text_field( wp_unslash( $_POST['prompt'] ) ) : '';
+
+    $response = array(
+        'status'  => 'success',
+        'message' => 'Prompt recibido: ' . $prompt,
+    );
+
+    echo json_encode( $response );
+    wp_die();
+}
+add_action( 'wp_ajax_gwd_process_prompt', 'gwd_process_prompt' );
