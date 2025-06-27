@@ -23,22 +23,17 @@ class Gemini_Connector {
     }
 
     /**
-     * Generate Divi shortcodes using Gemini API.
+     * Send a prompt to Gemini and return the plain text response.
      *
-     * @param string $user_prompt User provided prompt.
+     * @param string $prompt Prompt string.
      *
-     * @return string|WP_Error Shortcode string or WP_Error on failure.
+     * @return string|WP_Error Text response or WP_Error on failure.
      */
-    public function generate_divi_shortcodes( $user_prompt ) {
+    public function send_prompt( $prompt ) {
         $api_key = $this->get_api_key();
         if ( empty( $api_key ) ) {
             return new WP_Error( 'no_api_key', __( 'Gemini API key not configured.', 'gemini-weaver-divi' ) );
         }
-
-        $prompt = sprintf(
-            'Eres un asistente experto en el page builder Divi de WordPress. Tu única función es devolver shortcodes de Divi válidos basados en la petición del usuario. No añadas ninguna explicación, solo el código. Petición: %s',
-            $user_prompt
-        );
 
         $body = array(
             'contents' => array(
@@ -75,7 +70,23 @@ class Gemini_Connector {
             return new WP_Error( 'invalid_response', __( 'Invalid response from Gemini API.', 'gemini-weaver-divi' ) );
         }
 
-        $shortcode = trim( $data['candidates'][0]['content']['parts'][0]['text'] );
-        return $shortcode;
+        $text = trim( $data['candidates'][0]['content']['parts'][0]['text'] );
+        return $text;
+    }
+
+    /**
+     * Generate Divi shortcodes using Gemini API with a helper prompt.
+     *
+     * @param string $user_prompt User provided prompt.
+     *
+     * @return string|WP_Error Shortcode string or WP_Error on failure.
+     */
+    public function generate_divi_shortcodes( $user_prompt ) {
+        $prompt = sprintf(
+            'Eres un asistente experto en el page builder Divi de WordPress. Tu única función es devolver shortcodes de Divi válidos basados en la petición del usuario. No añadas ninguna explicación, solo el código. Petición: %s',
+            $user_prompt
+        );
+
+        return $this->send_prompt( $prompt );
     }
 }
