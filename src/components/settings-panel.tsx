@@ -13,20 +13,21 @@ export default function SettingsPanel() {
   const { toast } = useToast();
 
   useEffect(() => {
-    const stored = localStorage.getItem('geminiApiKey');
-    if (stored) {
-      setApiKey(stored);
-    } else {
-      (async () => {
-        try {
-          const { loadApiKey } = await import('@/app/actions');
-          const result = await loadApiKey();
-          if (result.data) setApiKey(result.data);
-        } catch (e) {
-          console.error('Failed to load API key', e);
+    (async () => {
+      try {
+        const { loadApiKey } = await import('@/app/actions');
+        const result = await loadApiKey();
+        if (result.data) {
+          setApiKey(result.data);
+          localStorage.setItem('geminiApiKey', result.data);
+          return;
         }
-      })();
-    }
+      } catch (e) {
+        console.error('Failed to load API key from server', e);
+      }
+      const stored = localStorage.getItem('geminiApiKey');
+      if (stored) setApiKey(stored);
+    })();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
