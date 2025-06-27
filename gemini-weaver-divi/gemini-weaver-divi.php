@@ -52,6 +52,8 @@ require_once GWD_PATH . 'includes/class-divi-metabox.php';
 require_once GWD_PATH . 'includes/class-gemini-connector.php';
 // Divi parser for converting shortcodes to JSON and back.
 require_once GWD_PATH . 'includes/class-divi-parser.php';
+// Settings page for API configuration.
+require_once GWD_PATH . 'includes/gwd-settings.php';
 
 /**
  * Enqueue scripts and styles on the page editor screen.

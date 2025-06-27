@@ -19,3 +19,8 @@
 - Use minimalist, geometric icons to complement the modern sans-serif typography and maintain a clean aesthetic.
 - Employ a clean, grid-based layout to ensure readability and a professional appearance. Prioritize clear information hierarchy to guide the user through the design process.
 - Incorporate subtle, non-intrusive animations to enhance user experience. For example, a gentle fade-in effect for generated elements or a smooth transition between prompts in the history panel.
+
+## Configuration
+
+1. In your WordPress admin dashboard, navigate to **Settings** ▸ **Gemini Weaver**.
+2. Enter your Google Gemini API key in the field provided and save the changes.
