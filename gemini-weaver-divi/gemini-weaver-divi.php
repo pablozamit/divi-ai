@@ -48,6 +48,8 @@ if ( ! gwd_is_divi_active() ) {
 
 // Include metabox class.
 require_once GWD_PATH . 'includes/class-divi-metabox.php';
+// Include Gemini connector.
+require_once GWD_PATH . 'includes/class-gemini-connector.php';
 
 /**
  * Enqueue scripts and styles on the page editor screen.
@@ -86,12 +88,21 @@ function gwd_process_prompt() {
 
     $prompt = isset( $_POST['prompt'] ) ? sanitize_text_field( wp_unslash( $_POST['prompt'] ) ) : '';
 
-    $response = array(
-        'status'  => 'success',
-        'message' => 'Prompt recibido: ' . $prompt,
-    );
+    $connector = new Gemini_Connector();
+    $shortcode = $connector->generate_divi_shortcodes( $prompt );
 
-    echo json_encode( $response );
+    if ( is_wp_error( $shortcode ) ) {
+        wp_send_json( array(
+            'status'  => 'error',
+            'message' => $shortcode->get_error_message(),
+        ) );
+    } else {
+        wp_send_json( array(
+            'status'    => 'success',
+            'shortcode' => $shortcode,
+        ) );
+    }
+
     wp_die();
 }
 add_action( 'wp_ajax_gwd_process_prompt', 'gwd_process_prompt' );

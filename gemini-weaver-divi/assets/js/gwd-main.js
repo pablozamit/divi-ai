@@ -16,6 +16,13 @@
             success: function(response) {
                 console.log(response);
                 $('#gwd-status').text('');
+                if (response.status === 'success') {
+                    var shortcode = response.shortcode || '';
+                    var $editor = jQuery('#content');
+                    $editor.val($editor.val() + "\n" + shortcode);
+                } else if (response.message) {
+                    $('#gwd-status').text(response.message);
+                }
             },
             error: function() {
                 $('#gwd-status').text('Error al procesar el prompt.');
