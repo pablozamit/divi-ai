@@ -43,6 +43,8 @@ class GWD_Divi_Metabox {
         echo '<button id="gwd-cancel-shortcode" class="button" type="button">' . esc_html__( 'Cancel', 'gemini-weaver-divi' ) . '</button>';
         echo '</p>';
         echo '</div>';
+        echo '<p><button id="gwd-history-toggle" class="button" type="button">' . esc_html__( 'Show History', 'gemini-weaver-divi' ) . '</button></p>';
+        echo '<div id="gwd-history-container" style="display:none;"></div>';
     }
 }
 
