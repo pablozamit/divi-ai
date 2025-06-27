@@ -85,6 +85,77 @@ function gwd_enqueue_editor_assets( $hook ) {
 add_action( 'admin_enqueue_scripts', 'gwd_enqueue_editor_assets' );
 
 /**
+ * Recursively find an element by ID.
+ *
+ * @param array $elements Parsed elements.
+ * @param string $search_id Element ID to find.
+ * @return array|null Reference to element or null.
+ */
+function &gwd_get_element_by_id( &$elements, $search_id ) {
+    foreach ( $elements as &$el ) {
+        if ( isset( $el['id'] ) && $el['id'] === $search_id ) {
+            return $el;
+        }
+        if ( isset( $el['content'] ) && is_array( $el['content'] ) ) {
+            $found = &gwd_get_element_by_id( $el['content'], $search_id );
+            if ( null !== $found ) {
+                return $found;
+            }
+        }
+    }
+    $null = null;
+    return $null;
+}
+
+/**
+ * Replace element by ID.
+ *
+ * @param array $elements Parsed elements.
+ * @param string $search_id Target ID.
+ * @param array $replacement Replacement element.
+ * @return bool
+ */
+function gwd_replace_element_by_id( &$elements, $search_id, $replacement ) {
+    foreach ( $elements as &$el ) {
+        if ( isset( $el['id'] ) && $el['id'] === $search_id ) {
+            $el = $replacement;
+            return true;
+        }
+        if ( isset( $el['content'] ) && is_array( $el['content'] ) ) {
+            if ( gwd_replace_element_by_id( $el['content'], $search_id, $replacement ) ) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+/**
+ * Find element ID by comparing structure (ignoring IDs).
+ *
+ * @param array $elements Elements tree.
+ * @param array $target   Target element.
+ * @return string|false   ID if found.
+ */
+function gwd_find_element_id_by_structure( $elements, $target ) {
+    foreach ( $elements as $el ) {
+        $tmp_el = $el;
+        $tmp_t  = $target;
+        unset( $tmp_el['id'], $tmp_t['id'] );
+        if ( $tmp_el == $tmp_t ) {
+            return isset( $el['id'] ) ? $el['id'] : false;
+        }
+        if ( isset( $el['content'] ) && is_array( $el['content'] ) ) {
+            $found = gwd_find_element_id_by_structure( $el['content'], $target );
+            if ( $found ) {
+                return $found;
+            }
+        }
+    }
+    return false;
+}
+
+/**
  * Process prompt sent from AJAX request.
  */
 function gwd_process_prompt() {
@@ -92,6 +163,8 @@ function gwd_process_prompt() {
 
     $prompt  = isset( $_POST['prompt'] ) ? sanitize_text_field( wp_unslash( $_POST['prompt'] ) ) : '';
     $post_id = isset( $_POST['post_id'] ) ? intval( $_POST['post_id'] ) : 0;
+    $element_id = isset( $_POST['element_id'] ) ? sanitize_text_field( wp_unslash( $_POST['element_id'] ) ) : '';
+    $element_sc = isset( $_POST['element_shortcode'] ) ? wp_unslash( $_POST['element_shortcode'] ) : '';
 
     $post = get_post( $post_id );
     if ( ! $post ) {
@@ -103,12 +176,32 @@ function gwd_process_prompt() {
 
     $parser       = new Divi_Parser();
     $current_json = $parser->parse_to_json( $post->post_content );
+    $current_data = json_decode( $current_json, true );
 
-    $full_prompt = sprintf(
-        "Eres un editor de páginas Divi. A continuación te doy la estructura JSON de una página. Modifícala según la petición del usuario y devuelve únicamente el nuevo JSON completo. Estructura actual: %s Petición: '%s'.",
-        $current_json,
-        $prompt
-    );
+    if ( $element_id ) {
+        $target = &gwd_get_element_by_id( $current_data, $element_id );
+    } elseif ( $element_sc ) {
+        $sc_json   = $parser->parse_to_json( $element_sc );
+        $sc_data   = json_decode( $sc_json, true );
+        $element_id = $sc_data ? gwd_find_element_id_by_structure( $current_data, $sc_data[0] ) : '';
+        $target     = $element_id ? gwd_get_element_by_id( $current_data, $element_id ) : null;
+    }
+
+    if ( isset( $target ) && is_array( $target ) ) {
+        $target_json = wp_json_encode( $target );
+        $full_prompt = sprintf(
+            "Eres un editor de páginas Divi. A continuación te doy la estructura JSON de un módulo con id %s. Modifícalo según la petición del usuario y devuelve únicamente el JSON actualizado de ese módulo. Elemento actual: %s Petición: '%s'.",
+            $element_id,
+            $target_json,
+            $prompt
+        );
+    } else {
+        $full_prompt = sprintf(
+            "Eres un editor de páginas Divi. A continuación te doy la estructura JSON de una página. Modifícala según la petición del usuario y devuelve únicamente el nuevo JSON completo. Estructura actual: %s Petición: '%s'.",
+            $current_json,
+            $prompt
+        );
+    }
 
     $connector     = new Gemini_Connector();
     $json_response = $connector->send_prompt( $full_prompt );
@@ -120,8 +213,16 @@ function gwd_process_prompt() {
         ) );
     }
 
-    $clean_json   = trim( $json_response, " \n\r\t`" );
-    $shortcode    = $parser->rebuild_from_json( $clean_json );
+    $clean_json = trim( $json_response, " \n\r\t`" );
+    if ( isset( $target ) && is_array( $target ) ) {
+        $new_element = json_decode( $clean_json, true );
+        if ( null !== $new_element ) {
+            gwd_replace_element_by_id( $current_data, $element_id, $new_element );
+            $clean_json = wp_json_encode( $current_data );
+        }
+    }
+
+    $shortcode = $parser->rebuild_from_json( $clean_json );
 
     $history_item = array(
         'prompt'    => $prompt,

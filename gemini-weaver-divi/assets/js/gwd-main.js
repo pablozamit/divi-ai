@@ -37,9 +37,30 @@
         });
     }
 
+    function getSelectedModule() {
+        if (window.ETBuilderAPI && typeof ETBuilderAPI.getActiveModule === 'function') {
+            var mod = ETBuilderAPI.getActiveModule();
+            if (mod && mod.model) {
+                return {
+                    id: mod.model.attributes.id || '',
+                    shortcode: mod.model.get('rawContent') || ''
+                };
+            }
+        }
+        var $active = $('.et-fb-module--active, .et_fb_selected_module').first();
+        if ($active.length) {
+            return {
+                id: $active.data('modelId') || '',
+                shortcode: $active.data('shortcode') || ''
+            };
+        }
+        return null;
+    }
+
     $('#gwd-submit-prompt').on('click', function() {
         var prompt = $('#gwd-prompt-input').val();
         var postId = $('#gwd-post-id').val();
+        var selected = getSelectedModule();
         $('#gwd-status').text('Procesando...');
 
         $.ajax({
@@ -49,6 +70,8 @@
                 action: 'gwd_process_prompt',
                 prompt: prompt,
                 post_id: postId,
+                element_id: selected ? selected.id : '',
+                element_shortcode: selected ? selected.shortcode : '',
                 nonce: gwd_ajax.nonce
             },
             success: function(response) {
