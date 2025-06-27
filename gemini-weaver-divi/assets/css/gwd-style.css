@@ -1,21 +1,32 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+
+/* General font and layout adjustments */
+#gwd-builder-panel,
+#gwd-divi-metabox {
+    font-family: 'Inter', Arial, sans-serif;
+}
+
 #gwd-status {
     margin-top: 10px;
+    color: #8F00FF; /* accent color */
 }
 
 #gwd-preview-container {
-    margin-top: 10px;
-    padding: 10px;
-    border: 1px solid #106ba3; /* blueprint blue */
-    background-color: #f5f8fa;
+    margin-top: 12px;
+    padding: 12px;
+    border: 1px solid #663399; /* primary color */
+    background-color: #E6E6FA; /* light lavender */
+    border-radius: 6px;
 }
 
 #gwd-history-container {
-    margin-top: 10px;
-    padding: 10px;
+    margin-top: 12px;
+    padding: 12px;
     border: 1px solid #ccc;
     background-color: #fff;
     max-height: 200px;
     overflow-y: auto;
+    border-radius: 6px;
 }
 
 #gwd-visual-preview-container {
@@ -23,6 +34,30 @@
     padding: 10px;
     border: 1px solid #ccc;
     background-color: #fff;
+    border-radius: 4px;
+}
+
+textarea#gwd-prompt-input,
+textarea#gwd-preview-content {
+    width: 100%;
+    padding: 8px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #fff;
+    font-family: 'Inter', Arial, sans-serif;
+}
+
+button#gwd-submit-prompt.button-primary,
+button#gwd-apply-shortcode.button-primary {
+    background-color: #663399;
+    border-color: #663399;
+}
+
+button#gwd-submit-prompt.button-primary:hover,
+button#gwd-apply-shortcode.button-primary:hover {
+    background-color: #8F00FF;
+    border-color: #8F00FF;
 }
 
 #gwd-builder-panel {
@@ -32,6 +67,8 @@
     width: 300px;
     background: #fff;
     border: 1px solid #ccc;
-    padding: 10px;
+    padding: 12px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     z-index: 99999;
 }
