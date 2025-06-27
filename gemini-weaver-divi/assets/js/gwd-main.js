@@ -79,9 +79,11 @@
                 $('#gwd-status').text('');
                 if (response.status === 'success') {
                     var shortcode = response.shortcode || '';
+                    var html = response.preview_html || '';
                     $('#gwd-preview-content').val(shortcode);
-                    $('#gwd-preview-container').show();
-                    fetchHistory();
+                    $('#gwd-visual-preview-container').html(html);
+    $('#gwd-preview-container').show();
+    fetchHistory();
                 } else if (response.message) {
                     $('#gwd-status').text(response.message);
                 }
@@ -100,7 +102,12 @@
 
     $('#gwd-cancel-shortcode').on('click', function() {
         $('#gwd-preview-content').val('');
+        $('#gwd-visual-preview-container').empty();
         $('#gwd-preview-container').hide();
+    });
+
+    $('#gwd-toggle-visual-preview').on('click', function() {
+        $('#gwd-visual-preview-container').toggle();
     });
 
     $('#gwd-history-toggle').on('click', function() {
