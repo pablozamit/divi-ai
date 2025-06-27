@@ -54,6 +54,8 @@ require_once GWD_PATH . 'includes/class-gemini-connector.php';
 require_once GWD_PATH . 'includes/class-divi-parser.php';
 // Settings page for API configuration.
 require_once GWD_PATH . 'includes/gwd-settings.php';
+// REST API endpoints for key management.
+require_once GWD_PATH . 'includes/gwd-rest-api.php';
 
 /**
  * Enqueue scripts and styles on the page editor screen.

@@ -1,10 +1,8 @@
 'use server';
 
 import { generateFullPageLayoutFromPrompt } from "@/ai/flows/create-bulk-page-layout";
-import { promises as fs } from 'fs';
-import path from 'path';
-
-const API_KEY_FILE = path.resolve(process.cwd(), 'api-key.txt');
+const WP_URL = process.env.WORDPRESS_URL || 'http://localhost:8080';
+const KEY_ENDPOINT = `${WP_URL}/wp-json/gwd/v1/gemini-key`;
 
 export async function processPrompt(prompt: string) {
   try {
@@ -22,17 +20,24 @@ export async function processPrompt(prompt: string) {
 
 export async function loadApiKey() {
   try {
-    const key = await fs.readFile(API_KEY_FILE, 'utf8');
-    return { data: key.trim() };
+    const res = await fetch(KEY_ENDPOINT, { cache: 'no-store' });
+    if (!res.ok) throw new Error('Request failed');
+    const json = await res.json();
+    return { data: json.key || '' };
   } catch (error) {
-    // File may not exist or reading failed
-    return { data: '' };
+    console.error('Error loading API key:', error);
+    return { error: 'Failed to load API key.' };
   }
 }
 
 export async function saveApiKey(apiKey: string) {
   try {
-    await fs.writeFile(API_KEY_FILE, apiKey, 'utf8');
+    const res = await fetch(KEY_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: apiKey }),
+    });
+    if (!res.ok) throw new Error('Request failed');
     return { success: true };
   } catch (error) {
     console.error('Error saving API key:', error);
