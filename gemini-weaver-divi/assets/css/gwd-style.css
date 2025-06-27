@@ -8,3 +8,12 @@
     border: 1px solid #106ba3; /* blueprint blue */
     background-color: #f5f8fa;
 }
+
+#gwd-history-container {
+    margin-top: 10px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    max-height: 200px;
+    overflow-y: auto;
+}

@@ -123,6 +123,12 @@ function gwd_process_prompt() {
     $clean_json   = trim( $json_response, " \n\r\t`" );
     $shortcode    = $parser->rebuild_from_json( $clean_json );
 
+    $history_item = array(
+        'prompt'    => $prompt,
+        'timestamp' => current_time( 'mysql' ),
+    );
+    add_post_meta( $post_id, '_gwd_prompt_history', wp_json_encode( $history_item ) );
+
     wp_send_json( array(
         'status'    => 'success',
         'shortcode' => $shortcode,
@@ -131,3 +137,38 @@ function gwd_process_prompt() {
     wp_die();
 }
 add_action( 'wp_ajax_gwd_process_prompt', 'gwd_process_prompt' );
+
+/**
+ * Retrieve prompt history for a post.
+ */
+function gwd_get_prompt_history() {
+    check_ajax_referer( 'gwd_nonce', 'nonce' );
+
+    $post_id = isset( $_POST['post_id'] ) ? intval( $_POST['post_id'] ) : 0;
+    $post    = get_post( $post_id );
+    if ( ! $post ) {
+        wp_send_json( array(
+            'status'  => 'error',
+            'message' => __( 'Invalid post ID.', 'gemini-weaver-divi' ),
+        ) );
+    }
+
+    $history_raw = get_post_meta( $post_id, '_gwd_prompt_history', false );
+    $history     = array();
+    if ( $history_raw ) {
+        foreach ( $history_raw as $item ) {
+            $decoded = json_decode( $item, true );
+            if ( $decoded ) {
+                $history[] = $decoded;
+            }
+        }
+    }
+
+    wp_send_json( array(
+        'status'  => 'success',
+        'history' => $history,
+    ) );
+
+    wp_die();
+}
+add_action( 'wp_ajax_gwd_get_history', 'gwd_get_prompt_history' );
