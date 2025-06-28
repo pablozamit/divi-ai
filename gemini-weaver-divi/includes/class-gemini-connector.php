@@ -63,15 +63,42 @@ class Gemini_Connector {
             return $response;
         }
 
+        $response_code = wp_remote_retrieve_response_code( $response );
         $response_body = wp_remote_retrieve_body( $response );
+
+        if ( 200 !== $response_code ) {
+            gwd_log(
+                sprintf(
+                    'HTTP %d error from Gemini API. Body: %s',
+                    $response_code,
+                    is_string( $response_body ) ? $response_body : ''
+                ),
+                'error'
+            );
+            return new WP_Error(
+                'http_error',
+                sprintf( __( 'Unexpected HTTP status %d from Gemini API.', 'gemini-weaver-divi' ), $response_code )
+            );
+        }
+
         if ( empty( $response_body ) ) {
             gwd_log( 'Empty response from Gemini API.', 'error' );
             return new WP_Error( 'empty_response', __( 'Empty response from Gemini API.', 'gemini-weaver-divi' ) );
         }
 
         $data = json_decode( $response_body, true );
+        if ( null === $data && JSON_ERROR_NONE !== json_last_error() ) {
+            gwd_log( 'JSON decode error: ' . json_last_error_msg() . '. Body: ' . $response_body, 'error' );
+            return new WP_Error( 'invalid_json', __( 'Could not decode Gemini response.', 'gemini-weaver-divi' ) );
+        }
+
+        if ( isset( $data['error'] ) ) {
+            gwd_log( 'Gemini API error: ' . wp_json_encode( $data['error'] ), 'error' );
+            return new WP_Error( 'api_error', $data['error']['message'] ?? __( 'Unknown API error.', 'gemini-weaver-divi' ) );
+        }
+
         if ( ! isset( $data['candidates'][0]['content']['parts'][0]['text'] ) ) {
-            gwd_log( 'Invalid response from Gemini API.', 'error' );
+            gwd_log( 'Invalid response from Gemini API. Body: ' . $response_body, 'error' );
             return new WP_Error( 'invalid_response', __( 'Invalid response from Gemini API.', 'gemini-weaver-divi' ) );
         }
 
